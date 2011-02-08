@@ -1,0 +1,35 @@
+<h2>Roll-your-own Brainhurt Pairing Generator</h2>
+
+<% form_tag "/brainhurter", :method => :post do %>
+  <%= label_tag "level_normal", "Use your written characters" %>
+  <%= radio_button_tag "level", "normal", params[:level] == "normal" %>
+  <%= label_tag "level_kamikaze", "Use all the characters in your written fandoms" %>
+  <%= radio_button_tag "level", "kamikaze", params[:level] == "kamikaze" %>
+  <%= select_tag "pairings_count", options_for_select(["5", "10", "15", "20"], params[:pairings_count]) %>
+  <%= submit_tag 'Gimme!' %>
+<% end %>
+
+<% if !params[:pairings_count].blank? && !@pairings.blank? %>
+  <ul>
+<% @pairings.each do |pairing| %>
+    <li><%= pairing[:top].name %>/<%= pairing[:bottom].name %></li>
+<% end %>
+  </ul>
+<% elsif !params[:pairings_count].blank? && @pairings.blank? %>
+  <p>Sorry, you either don't have enough variety in fandoms and/or characters, or there was some other kind of error.</p>
+<% end %>
+
+<% unless @crtUserFandoms.blank? %>
+<h3>Your Written Fandoms</h3>
+<p><%= @crtUserFandoms.collect(&:name).sort.join(ArchiveConfig.DELIMITER_FOR_OUTPUT) %></p>
+<% end %>
+
+<% unless @crtUserCharas.blank? %>
+<h3>Your Written Characters</h3>
+<p><%= @crtUserCharas.collect(&:name).sort.join(ArchiveConfig.DELIMITER_FOR_OUTPUT) %></p>
+<% end %>
+
+<% unless @crtUserSum.blank? %>
+<h3>Your Maximal Pool of Characters</h3>
+<p><%= @crtUserSum.collect(&:name).sort.join(ArchiveConfig.DELIMITER_FOR_OUTPUT) %></p>
+<% end %>
