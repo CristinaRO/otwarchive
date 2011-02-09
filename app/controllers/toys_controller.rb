@@ -2,8 +2,8 @@ class ToysController < ApplicationController
   # Enigel's experimental toy; don't refresh too much!
   def brainhurter
     if current_user.is_a?(User)
-      @crtUserFandoms = ( (current_user.tags.uniq.select {|t| t.is_a?(Fandom) && t.canonical?}) + (current_user.tags.uniq.select {|t| t.is_a?(Fandom) && t.merger}.collect(&:merger)) ).uniq
-      @crtUserCharas  = ( (current_user.tags.uniq.select {|t| t.is_a?(Character) && t.canonical?}) + (current_user.tags.uniq.select {|t| t.is_a?(Character) && t.merger}.collect(&:merger)) ).uniq
+      @crtUserFandoms = current_user.filters.by_type("Fandom").group(:id) - [Fandom.find_by_name("No Fandom")]
+      @crtUserCharas = current_user.filters.by_type("Character").group(:id)
       
       if !params[:level].blank? && params[:level].to_s.downcase == "kamikaze"
         @crtUserSum = (@crtUserFandoms.collect {|f| f.characters.canonical} + @crtUserCharas).flatten.uniq
@@ -12,7 +12,7 @@ class ToysController < ApplicationController
         pool = Array.new(@crtUserCharas)
       end
       
-      if @crtUserFandoms.size < 2 || pool.size < 2
+      if @crtUserFandoms.length < 2 || pool.length < 2
         flash[:error] = "Sorry, you need to have written in at least two different fandoms, at least two different characters!"
       else
         if !params[:pairings_count].blank? && ["5","10","15","20"].include?(params[:pairings_count])

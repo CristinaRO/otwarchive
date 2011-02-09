@@ -426,6 +426,8 @@ Otwarchive::Application.routes.draw do
     end
   end
   resources :search, :only => :index
+  
+  resources :toys, :only => :brainhurter
 
   match 'search' => 'search#index'
   match 'support' => 'feedbacks#create', :as => 'feedbacks', :via => [:post]
