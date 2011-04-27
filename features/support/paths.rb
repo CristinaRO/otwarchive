@@ -58,7 +58,9 @@ module NavigationHelpers
     when /my bookmarks page/
       user_bookmarks_path(User.current_user)
     when /my subscriptions page/
-      user_subscriptions_path(User.current_user)      
+      user_subscriptions_path(User.current_user)
+    when /my inbox page/
+      user_inbox_path(User.current_user)
     when /the import page/
       new_work_path(:import => 'true')
     when /the work-skins page/

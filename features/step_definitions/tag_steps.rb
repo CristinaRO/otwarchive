@@ -65,3 +65,8 @@ Given /^the tag wrangler "([^\"]*)" with password "([^\"]*)" is wrangler of "([^
   fill_in "tag_fandom_string", :with => fandomname
   click_button "Assign"
 end
+
+Given /^I am the wrangler of "([^\"]*)"$/ do |fandom|
+  me = User.current_user.login
+  Given %{the tag wrangler "#{me}" with password "#{DEFAULT_PASSWORD}" is wrangler of "#{fandom}"}
+end

@@ -32,7 +32,7 @@ end
 
 When /^I post the comment "([^"]*)" on the work "([^"]*)"$/ do |comment_text, work|
   Given "I set up the comment \"#{comment_text}\" on the work \"#{work}\""
-  press("Add Comment")
+  click_button "Add Comment"
 end
 
 When /^I post the comment "([^"]*)" on the work "([^"]*)" as a guest$/ do |comment_text, work|
@@ -41,4 +41,26 @@ When /^I post the comment "([^"]*)" on the work "([^"]*)" as a guest$/ do |comme
   fill_in("Name", :with => "guest")
   fill_in("Email", :with => "guest@foo.com")
   click_button "Add Comment"
+end
+
+When /^I receive a comment "([^"]*)" on my work "([^"]*)"$/ do |comment, work|
+  me = User.current_user.login
+  Given %{I post the work "#{work}"}
+  Given "I am logged out"
+  Given "I am logged in as a random user"
+  Given %{I post the comment "#{comment}" on the work "#{work}"}
+  Given "I am logged out"
+  Given %{I am logged in as "#{me}"}
+end
+
+When /^"([^"]+)" posts a comment "([^"]*)" on the tag "([^"]*)"$/ do |user, comment, tag|
+  me = User.current_user.nil? ? nil : User.current_user.login
+  Given "I am logged out"
+  Given %{I am logged in as "#{user}"}
+  When %{I view the tag "#{tag}"}
+  When %{I follow "0 comments"}
+  When %{I fill in "Comment" with "#{comment}"}
+  When %{I press "Add Comment"}
+  Given "I am logged out"
+  Given %{I am logged in as "#{me}"} unless me.nil?
 end
