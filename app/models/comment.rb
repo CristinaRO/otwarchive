@@ -8,8 +8,10 @@ class Comment < ActiveRecord::Base
   belongs_to :commentable, :polymorphic => true
   belongs_to :parent, :polymorphic => true
 
-  has_many :inbox_comments, :foreign_key => 'feedback_comment_id', :dependent => :destroy
-  has_many :users, :through => :inbox_comments
+  has_many :inbox_messages, :as => :messageable
+  #:foreign_key => 'feedback_comment_id', :dependent => :destroy
+  has_many :users, :through => :inbox_messages
+  #has_many :recipients, :through => :inbox_messages
 
   validates_presence_of :name, :unless => :pseud_id
   validates :email, :email_veracity => {:on => :create, :unless => :pseud_id}

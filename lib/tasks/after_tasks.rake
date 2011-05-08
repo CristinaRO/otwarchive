@@ -265,6 +265,10 @@ namespace :After do
     Work.where("restricted IS NULL").update_all(:restricted => false)
   end
 
+  desc "Set messageable_type to Comment for all existing inbox messages"
+  task(:set_messageable_type => :environment) do
+    InboxMessage.update_all(:messageable_type => 'Comment')
+  end
 end # this is the end that you have to put new tasks above
 
 ##################
@@ -273,4 +277,4 @@ end # this is the end that you have to put new tasks above
 # Remove tasks from the list once they've been run on the deployed site
 desc "Run all current migrate tasks"
 #task :After => ['After:fix_default_pseuds', 'After:remove_owner_kudos']
-task :After => ['After:fix_restricted']
+task :After => ['After:fix_restricted', 'After:set_messageable_type']

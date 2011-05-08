@@ -134,8 +134,8 @@ class User < ActiveRecord::Base
   has_many :fandoms, :through => :wrangling_assignments
   has_many :wrangled_tags, :class_name => 'Tag', :as => :last_wrangler
 
-  has_many :inbox_comments, :dependent => :destroy
-  has_many :feedback_comments, :through => :inbox_comments, :conditions => {:is_deleted => false, :approved => true}, :order => 'created_at DESC'
+  has_many :inbox_messages, :dependent => :destroy
+  has_many :feedback_comments, :through => :inbox_messages, :source => :messageable, :source_type => 'Comment', :conditions => {:is_deleted => false, :approved => true}, :order => 'created_at DESC'
 
   has_many :log_items, :dependent => :destroy
   validates_associated :log_items
@@ -145,14 +145,14 @@ class User < ActiveRecord::Base
     Kudo.update_all("pseud_id = NULL", "pseud_id IN (#{self.pseuds.collect(&:id).join(',')})")
   end
 
-  def read_inbox_comments
-    inbox_comments.find(:all, :conditions => {:read => true})
+  def read_inbox_messages
+    inbox_messages.find(:all, :conditions => {:read => true})
   end
-  def unread_inbox_comments
-    inbox_comments.find(:all, :conditions => {:read => false})
+  def unread_inbox_messages
+    inbox_messages.find(:all, :conditions => {:read => false})
   end
-  def unread_inbox_comments_count
-    inbox_comments.count(:all, :conditions => {:read => false})
+  def unread_inbox_messages_count
+    inbox_messages.count(:all, :conditions => {:read => false})
   end
 
   scope :alphabetical, :order => :login
