@@ -8,10 +8,10 @@ class InboxController < ApplicationController
   end
   
   def show
-    @inbox_total = @user.inbox_comments.count
-    @unread = @user.inbox_comments.count_unread
+    @inbox_total = @user.inbox_messages.count
+    @unread = @user.inbox_messages.count_unread
     filters = params[:filters] || {}   
-    @inbox_comments = @user.inbox_comments.find_by_filters(filters)
+    @inbox_messages = @user.inbox_messages.find_by_filters(filters)
     @select_read, @select_replied_to, @select_date = filters[:read], filters[:replied_to], filters[:date]
   end
   
@@ -28,13 +28,13 @@ class InboxController < ApplicationController
   
   def update
     begin
-      @inbox_comments = InboxComment.find(params[:inbox_comments])
+      @inbox_messages = InboxMessage.find(params[:inbox_messages])
       if params[:read]
-        @inbox_comments.each { |i| i.update_attribute(:read, true) }
+        @inbox_messages.each { |i| i.update_attribute(:read, true) }
       elsif params[:unread]
-        @inbox_comments.each { |i| i.update_attribute(:read, false) }
+        @inbox_messages.each { |i| i.update_attribute(:read, false) }
       elsif params[:delete]
-        @inbox_comments.each { |i| i.destroy }
+        @inbox_messages.each { |i| i.destroy }
       end    
     rescue
       flash[:warning] = t('please_select', :default => "Please select something first")
