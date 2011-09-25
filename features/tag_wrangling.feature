@@ -228,3 +228,17 @@ Feature: Tag wrangling
     When I edit the tag "Cabin Pressure"
     Then I should not see "Sign Up"
       And I should see the tag wrangler listed as an editor of the tag
+
+  Scenario: Trying to create a invalid tag - disallowed characters
+
+    Given I am logged in as a tag wrangler
+    When I try to create a tag with invalid characters
+    Then I should not see "successfully created"
+      And I should receive a friendly error message about invalid characters
+
+  Scenario: Trying to create an invalid tag - too long
+
+    Given I am logged in as a tag wrangler
+    When I try to create a tag that is too long
+    Then I should not see "successfully created"
+      And I should receive a friendly error message about tag length

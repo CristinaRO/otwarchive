@@ -76,27 +76,27 @@ class Tag < ActiveRecord::Base
   validates_length_of :name, :minimum => 1, :message => "cannot be blank."
   validates_length_of :name,
     :maximum => ArchiveConfig.TAG_MAX,
-    :message => "of tag is too long -- try using less than #{ArchiveConfig.TAG_MAX} characters or using commas to separate your tags."
+    :message => "^" + ts("The name of a tag is too long -- try using less than #{ArchiveConfig.TAG_MAX} characters or using commas to separate your tags.")
   validates_format_of :name,
     :with => /\A[^,*<>^{}=`\\%]+\z/,
-    :message => 'of a tag can not include the following restricted characters: , ^ * < > { } = ` \\ %'
+    :message => '^' + ts('The name of a tag can not include the following restricted characters: , ^ * < > { } = ` \\ %')
 
   before_validation :check_synonym
   def check_synonym
     if !self.new_record? && self.name_changed?
       unless User.current_user.is_a?(Admin) || (self.name.downcase == self.name_was.downcase)
-        self.errors.add(:name, "can only be changed by an admin.")
+        self.errors.add(:name, ts("can only be changed by an admin."))
       end
     end
     if self.merger_id
       if self.canonical?
-        self.errors.add(:base, "A canonical can't be a synonym")
+        self.errors.add(:base, ts("A canonical can't be a synonym"))
       end
       if self.merger_id == self.id
-        self.errors.add(:base, "A tag can't be a synonym of itself.")
+        self.errors.add(:base, ts("A tag can't be a synonym of itself."))
       end
       unless self.merger.class == self.class
-        self.errors.add(:base, "A tag can only be a synonym of a tag in the same category as itself.")
+        self.errors.add(:base, ts("A tag can only be a synonym of a tag in the same category as itself."))
       end
     end
   end
@@ -692,7 +692,7 @@ class Tag < ActiveRecord::Base
       if parent
         meta_tagging = self.meta_taggings.build(:meta_tag => parent, :direct => true)
         unless meta_tagging.valid? && meta_tagging.save
-          self.errors.add(:base, "You attempted to create an invalid meta tagging. :(")
+          self.errors.add(:base, ts("You attempted to create an invalid meta tagging. :("))
         end
       end
     end
@@ -705,7 +705,7 @@ class Tag < ActiveRecord::Base
       if sub
         meta_tagging = sub.meta_taggings.build(:meta_tag => self, :direct => true)
         unless meta_tagging.valid? && meta_tagging.save
-          self.errors.add(:base, "You attempted to create an invalid meta tagging. :(")
+          self.errors.add(:base, ts("You attempted to create an invalid meta tagging. :("))
         end
       end
     end
@@ -722,15 +722,15 @@ class Tag < ActiveRecord::Base
       new_merger = Tag.find_by_name(tag_string)
       unless new_merger && new_merger == self.merger
         if new_merger && new_merger == self
-          self.errors.add(:base, tag_string + " is considered the same as " + self.name + " by the database.")
+          self.errors.add(:base, tag_string + ts(" is considered the same as ") + self.name + ts(" by the database."))
         elsif new_merger && !new_merger.canonical?
-          self.errors.add(:base, new_merger.name + " is not a canonical tag. Please make it canonical before adding synonyms to it.")
+          self.errors.add(:base, new_merger.name + ts(" is not a canonical tag. Please make it canonical before adding synonyms to it."))
         elsif new_merger && new_merger.class != self.class
-          self.errors.add(:base, new_merger.name + " is a #{new_merger.type.to_s.downcase}. Synonyms must belong to the same category.")
+          self.errors.add(:base, new_merger.name + ts(" is a #{new_merger.type.to_s.downcase}. Synonyms must belong to the same category."))
         elsif !new_merger
           new_merger = self.class.new(:name => tag_string, :canonical => true)
           unless new_merger.save
-            self.errors.add(:base, tag_string + " could not be saved. Please make sure that it's a valid tag name.")
+            self.errors.add(:base, tag_string + ts(" could not be saved. Please make sure that it's a valid tag name."))
           end
         end
         if new_merger && self.errors.empty?
