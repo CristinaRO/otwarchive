@@ -75,13 +75,13 @@ module ValidationHelper
                 :failureMessage => ts("Must be present."),
                 :validMessage => ''}
     if options[:maximum_length]
-      defaults.merge!(:tooLongMessage => ts("Must be less than %{maxlength} characters long.", :maxlength => options[:maximum_length].to_s)
+      defaults.merge!(:tooLongMessage => ts("Must be less than %{maxlength} characters long.", :maxlength => options[:maximum_length].to_s))
     end
     if options[:minimum_length]
-      defaults.merge!(:tooShortMessage => ts("Must be at least %{minlength} characters long.", :minlength => options[:minimum_length].to_s)
+      defaults.merge!(:tooShortMessage => ts("Must be at least %{minlength} characters long.", :minlength => options[:minimum_length].to_s))
     end
     if options[:notANumberMessage]
-      defaults.merge!(:notANumberMessage => ts("Please enter a number")
+      defaults.merge!(:notANumberMessage => ts("Please enter a number"))
     end
 
     options = defaults.merge(options)

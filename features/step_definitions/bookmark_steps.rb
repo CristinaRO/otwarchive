@@ -1,3 +1,9 @@
+Given /^I have a bookmark for "([^\"]*)"$/ do |title|
+  Given %{I start a new bookmark for "#{title}"}
+    And %{I fill in "Your Tags" with "#{DEFAULT_BOOKMARK_TAGS}"}
+    And %{I press "Create"}
+end
+
 When /^I start a new bookmark for "([^\"]*)"$/ do |title|
   When %{I open the bookmarkable work "#{title}"}  
   click_link("Bookmark")
