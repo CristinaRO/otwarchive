@@ -81,7 +81,7 @@ module Taggable
   end
 
   def validate_tags
-    errors.add(:base, "Work must have required tags.") unless self.has_required_tags?
+    errors.add(:base, ts("Work must have required tags.")) unless self.has_required_tags?
     self.has_required_tags?
   end
 
