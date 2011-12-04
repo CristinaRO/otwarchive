@@ -177,3 +177,30 @@ Scenario: extra commas in bookmark form (Issue 2284)
     And I fill in "Your Tags" with "Good tag, ,, also good tag, "
     And I press "Create"
   Then I should see "created"
+
+Scenario Outline: creating bookmark with invalid tags
+  Given I am logged in as a random user
+    And I start a new bookmark
+  When I fill in "Your Tags" with "<invalid_tag>"
+    And I press "Create"
+  Then I should not see "successfully"
+    And show me the main content
+
+  Examples:
+    | invalid_tag    |
+    | Un*x > Windoze |
+    | 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789extra |
+
+Scenario Outline: editing bookmark with invalid tags
+  Given I am logged in as a random user
+    And I have a bookmark for "Masterpiece"
+  When I edit the bookmark for "Masterpiece"
+    And I fill in "Your Tags" with "<invalid_tag>"
+    And I press "Update"
+  Then I should not see "successfully"
+    And show me the main content
+
+  Examples:
+    | invalid_tag    |
+    | Un*x > Windoze |
+    | 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789extra |

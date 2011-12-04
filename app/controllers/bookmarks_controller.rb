@@ -189,7 +189,8 @@ class BookmarksController < ApplicationController
        @bookmark.errors.add(:base, "Fandom tag is required")
        render :new and return
     end
-    if @bookmarkable.save && @bookmark.save
+    if !@bookmarkable.new_record? && @bookmark.save ||
+        @bookmarkable.new_record? && @bookmarkable.save && @bookmark.save
       flash[:notice] = ts('Bookmark was successfully created.')
       redirect_to(@bookmark) and return
     end 

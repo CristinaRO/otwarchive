@@ -132,8 +132,30 @@ When /^I view tag wrangling discussions$/ do
   When %{I follow "Discussion"}
 end
 
+When /^I try to create a tag with invalid characters$/ do
+  visit new_tag_url
+  fill_in("Name", :with => "Un*x > Windoze")
+  choose("Freeform")
+  click_button("Create Tag")
+end
+
+When /^I try to create a tag that is too long$/ do
+  visit new_tag_url
+  fill_in("Name", :with => "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789extra")
+  choose("Freeform")
+  click_button("Create Tag")
+end
+
 ### THEN
 
 Then /^I should see the tag wrangler listed as an editor of the tag$/ do
   Then %{I should see "wrangler" within ".tag_edit"}
+end
+
+Then /^I should receive a friendly error message about invalid characters$/ do
+  Then %{I should see "The name of a tag can not include the following restricted characters: , ^ * "}
+end
+
+Then /^I should receive a friendly error message about tag length$/ do
+  Then %{I should see "The name of a tag is too long -- try using less than"}
 end
