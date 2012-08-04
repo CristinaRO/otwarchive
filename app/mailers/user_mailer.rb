@@ -1,6 +1,8 @@
 class UserMailer < BulletproofMailer::Base
   include Resque::Mailer # see README in this directory
 
+  @queue = :user_mailer
+
   layout 'mailer'
 
   include AuthlogicHelpersForMailers # otherwise any logged_in? checks in views will choke and die! :)

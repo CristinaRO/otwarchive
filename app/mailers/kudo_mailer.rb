@@ -1,6 +1,8 @@
 class KudoMailer < ActionMailer::Base
   include Resque::Mailer # see README in this directory
 
+  @queue = :kudo_mailer
+
   layout 'mailer'
   default :from => ArchiveConfig.RETURN_ADDRESS
 

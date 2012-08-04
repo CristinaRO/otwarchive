@@ -1,6 +1,8 @@
 class CommentMailer < ActionMailer::Base
   include Resque::Mailer # see README in this directory
 
+  @queue = :comment_mailer
+
   layout 'mailer'
   default :from => ArchiveConfig.RETURN_ADDRESS
 
