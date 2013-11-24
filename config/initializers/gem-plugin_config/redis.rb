@@ -3,7 +3,7 @@ require 'redis_test_setup'
  
  if ENV['TRAVIS']
    rails_root = ENV['TRAVIS_BUILD_DIR']
-   rails_env = 'travis'
+   rails_env = 'test'
  else
    rails_root = ENV['RAILS_ROOT'] || File.dirname(__FILE__) + '/../../..'
    rails_env = ENV['RAILS_ENV'] || 'development'

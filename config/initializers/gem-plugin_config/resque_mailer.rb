@@ -1,1 +1,1 @@
-Resque::Mailer.excluded_environments = [:test, :cucumber, :travis]
+Resque::Mailer.excluded_environments = [:test, :cucumber]

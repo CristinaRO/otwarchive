@@ -1,5 +1,5 @@
 travis:
    adapter: mysql2
-   database: otwarchive_travis
+   database: otwarchive_test
    username: root
    encoding: utf8
