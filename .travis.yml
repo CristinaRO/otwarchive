@@ -19,7 +19,7 @@ script:
   - RAILS_ENV=travis bundle exec rake db:migrate --trace
   - bundle exec cucumber -f progress -r features features/$TEST_GROUP -b
 before_script:
-  - mysql -e 'create database otwarchive_test;'
+  - mysql -e 'create database otwarchive_travis;'
   - cp config/database.travis.yml config/database.yml
   - cp config/newrelic.example config/newrelic.yml
   - cp config/redis-cucumber.conf.example config/redis-cucumber.conf
@@ -27,7 +27,7 @@ before_script:
 notifications:
   email:
     recipients:
-      - otw-coders@transformativeworks.org
+      - enigel@gmail.com
     on_success: change
     on_failure: always
   irc:
