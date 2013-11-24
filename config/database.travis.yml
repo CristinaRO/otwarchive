@@ -1,4 +1,4 @@
-travis:
+test:
    adapter: mysql2
    database: otwarchive_test
    username: root
