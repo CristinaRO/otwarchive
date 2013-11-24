@@ -3,7 +3,7 @@ require 'redis_test_setup'
  
  if ENV['TRAVIS']
    rails_root = ENV['TRAVIS_BUILD_DIR']
-   rails_env = 'test'
+   rails_env = 'travis'
  else
    rails_root = ENV['RAILS_ROOT'] || File.dirname(__FILE__) + '/../../..'
    rails_env = ENV['RAILS_ENV'] || 'development'
@@ -18,3 +18,4 @@ require 'redis_test_setup'
  redis_config = YAML.load_file(rails_root + '/config/redis.yml')
  redis_host, redis_port = redis_config[rails_env].split(":")
  $redis = Redis.new(:host => redis_host, :port => redis_port)
+ 

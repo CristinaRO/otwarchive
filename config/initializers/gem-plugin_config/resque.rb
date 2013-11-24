@@ -2,7 +2,7 @@ require 'resque'
  
  if ENV['TRAVIS']
    rails_root = ENV['TRAVIS_BUILD_DIR']
-   rails_env = 'test'
+   rails_env = 'travis'
  else
    rails_root = ENV['RAILS_ROOT'] || File.dirname(__FILE__) + '/../../..'
    rails_env = ENV['RAILS_ENV'] || 'development'
@@ -12,7 +12,7 @@ require 'resque'
  Resque.redis = redis_config[rails_env]
  
  # in-process performing of jobs (for testing) doesn't require a redis server
- Resque.inline = ENV['RAILS_ENV'] == "test"
+ Resque.inline = ( ENV['RAILS_ENV'] == "test" || ENV['RAILS_ENV'] == "travis")
  
  Resque.after_fork do
    Resque.redis.client.reconnect
