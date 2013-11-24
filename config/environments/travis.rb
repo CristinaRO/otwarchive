@@ -14,7 +14,8 @@ Otwarchive::Application.configure do
   config.consider_all_requests_local       = true
   config.action_controller.perform_caching = true
 
-  config.cache_store = :mem_cache_store #, YAML.load_file("#{Rails.root}/config/local.yml")['MEMCACHED_URL']
+  config.cache_store = :memory_store
+  # config.cache_store = :mem_cache_store #, YAML.load_file("#{Rails.root}/config/local.yml")['MEMCACHED_URL']
   require 'memcache'
 
   # Raise exceptions instead of rendering exception templates
