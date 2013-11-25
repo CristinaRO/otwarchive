@@ -10,7 +10,6 @@ class KudoObserver < ActiveRecord::Observer
     end
   end
 
-
   protected
     def notify_user_by_email?(user)
       user.nil? ? false : ( user.is_a?(Admin) ? true :

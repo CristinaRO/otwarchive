@@ -78,6 +78,7 @@ Feature: Leave kudos
       #'
       And I follow "delete_foobar"
       And I view the work "Awesome Story"
+    # there's no clean way to expire the cache for all kudos after a pseud change
     # Then I should see "barfoo (myname3) left kudos on this work!"
     When "myname3" deletes their account
       And I view the work "Awesome Story"
