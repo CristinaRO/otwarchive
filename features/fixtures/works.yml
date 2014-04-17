@@ -8,6 +8,7 @@ first:
   authors_to_sort_on: testuser
   revised_at: 2012-04-30
   complete: true
+  status: complete
 second:
   id: 2
   posted: true
@@ -18,6 +19,7 @@ second:
   authors_to_sort_on: testuser
   revised_at: 2004-04-30
   complete: true
+  status: complete
 third:
   id: 3
   posted: true
@@ -29,6 +31,7 @@ third:
   revised_at: 2012-07-10
   summary: for the second time
   complete: true
+  status: complete
 fourth:
   id: 4
   posted: true
@@ -39,6 +42,7 @@ fourth:
   authors_to_sort_on: testuser2
   revised_at: 2012-04-30
   complete: true
+  status: complete
 fifth:
   id: 5
   posted: true
@@ -49,3 +53,4 @@ fifth:
   authors_to_sort_on: testuser2
   revised_at: 2012-04-30
   expected_number_of_chapters: 5
+  status: wip
