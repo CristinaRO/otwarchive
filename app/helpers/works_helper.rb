@@ -168,7 +168,7 @@ module WorksHelper
     end
     # Create list of tags
     text << "<ul>"
-    %w(Fandom Rating Warning Category Character Relationship Freeform).each do |type|
+    %w(Fandom Rating ArchiveWarning Category Character Relationship Freeform).each do |type|
       if tags[type]
         text << "<li>#{type.constantize.label_name}: #{tags[type].map { |t| link_to_tag_works(t, full_path: true) }.join(', ')}</li>"
       end
