@@ -63,15 +63,15 @@ module TagsHelper
   end
 
   def link_to_tag(tag, options = {})
-    link_to_tag_with_text(tag, tag.display_name, options)
+    link_to_tag_with_text(tag, tag.is_a?(ArchiveWarning) ? warning_display_name(tag.name) : tag.display_name, options)
   end
 
   def link_to_tag_works(tag, options = {})
-    link_to_tag_works_with_text(tag, tag.display_name, options)
+    link_to_tag_works_with_text(tag, tag.is_a?(ArchiveWarning) ? warning_display_name(tag.name) : tag.display_name, options)
   end
 
   def link_to_tag_with_text(tag, link_text, options = {})
-    if options[:full_path] 
+    if options[:full_path]
       link_to_with_tag_class(tag_url(tag), link_text, options)
     else
       link_to_with_tag_class(tag_path(tag), link_text, options)
@@ -86,7 +86,7 @@ module TagsHelper
     collection = options[:collection]
     if options[:full_path]
       link_to_with_tag_class(collection ? collection_tag_works_url(collection, tag) : tag_works_url(tag), link_text, options)
-    else 
+    else
       link_to_with_tag_class(collection ? collection_tag_works_path(collection, tag) : tag_works_path(tag), link_text, options)
     end
   end
