@@ -37,7 +37,7 @@ gem 'activerecord-mysql-reconnect', '~> 0.4.1'
 gem 'redis', ">=3.0"
 gem 'redis-namespace'
 
-# Here are all our application-specific gems
+# Here are all our application-specific ge
 
 # Used to convert strings to ascii
 gem 'unicode'
@@ -132,6 +132,8 @@ gem 'newrelic_rpm'
 gem 'connection_pool'
 gem 'dalli'
 gem 'kgio', '2.10.0'
+
+gem 'scrypt', '~> 3.0.6'
 
 group :test do
   gem 'rspec', '~> 3.4'
