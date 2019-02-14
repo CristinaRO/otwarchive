@@ -151,7 +151,7 @@ class TagsController < ApplicationController
         end
       else
         tag_type = params[:tag_type]
-        if %w(warnings freeforms).include?(tag_type)
+        if %w(archive_warnings freeforms).include?(tag_type)
           @display_tags = @display_creation.send(tag_type)
         end
       end
