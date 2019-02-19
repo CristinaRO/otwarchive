@@ -265,7 +265,7 @@ module Taggable
 
   # Simple name to make it easier for people to use in full-text search
   def tag
-    (tags + filters).uniq.map{ |t| t.name == "Warning" ? "ArchiveWarning" : t.name}
+    (tags + filters).uniq.map{ |t| t.name }
   end
 
   # Index all the filters for pulling works
