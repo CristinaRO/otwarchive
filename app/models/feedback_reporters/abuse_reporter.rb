@@ -5,4 +5,18 @@ class AbuseReporter < FeedbackReporter
   def template
     "abuse_reports/report"
   end
+
+  def request_headers
+    {
+      'orgId' => ArchiveConfig.ABUSE_ORG_ID,
+      'Authorization' => ArchiveConfig.ABUSE_OAUTH_TOKEN
+    }
+  end
+
+  def request_body
+    {
+      'subject' => title,
+      'departmentId' => ArchiveConfig.SUPPORT_DEPARTMENT_ID,
+    }
+  end
 end
