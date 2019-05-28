@@ -913,9 +913,9 @@ class WorksController < ApplicationController
   def work_tag_params
     params.require(:work).permit(
       :rating_string, :fandom_string, :relationship_string, :character_string,
-      :warning_string, :category_string, :freeform_string, :language_id,
+      :archive_warning_string, :category_string, :freeform_string, :language_id,
       category_string: [],
-      warning_strings: []
+      archive_warning_strings: []
     )
   end
 
