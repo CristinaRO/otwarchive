@@ -155,6 +155,14 @@ module TagsHelper
     ArchiveWarning::DISPLAY_NAME_MAPPING[name] || name
   end
 
+  def tag_type_label_name(tag_type)
+    if tag_type == 'archive_warning'
+      "Warnings"
+    else
+      tag_type.humanize.titleize.pluralize
+    end
+  end
+
   # Individual results for a tag search
   def tag_search_result(tag)
     if tag
