@@ -131,17 +131,12 @@ class TagsController < ApplicationController
     end
   end
 
-  # TODO: Refactor the tag_type checking logic
   def show_hidden
     unless params[:creation_id].blank? || params[:creation_type].blank? || params[:tag_type].blank?
-      model = case params[:creation_type].downcase
-              when "series"
-                Series
-              when "work"
-                Work
-              when "chapter"
-                Chapter
-              end
+      model = if Object.const_defined?(params[:creation_type].classify)
+        params[:creation_type].classify.constantize
+      end
+
       @display_creation = model.find(params[:creation_id]) if model.is_a? Class
 
       # Tags aren't directly on series, so we need to handle them differently
