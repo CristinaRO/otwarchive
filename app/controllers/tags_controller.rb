@@ -134,8 +134,8 @@ class TagsController < ApplicationController
   def show_hidden
     unless params[:creation_id].blank? || params[:creation_type].blank? || params[:tag_type].blank?
       model = if Object.const_defined?(params[:creation_type].classify)
-        params[:creation_type].classify.constantize
-      end
+                params[:creation_type].classify.constantize
+              end
 
       @display_creation = model.find(params[:creation_id]) if model.is_a? Class
 
@@ -148,11 +148,11 @@ class TagsController < ApplicationController
         end
       else
         @display_tags = case params[:tag_type]
-        when 'warnings'
-          @display_creation.archive_warnings
-        when 'freeforms'
-          @display_creation.freeforms
-        end
+                        when 'warnings'
+                          @display_creation.archive_warnings
+                        when 'freeforms'
+                          @display_creation.freeforms
+                        end
       end
 
       if params[:tag_type] == 'warnings'
