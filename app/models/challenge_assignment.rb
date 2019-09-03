@@ -184,7 +184,7 @@ class ChallengeAssignment < ApplicationRecord
     if pseud_byline.blank?
       self.offer_signup = nil
     else
-      pseuds = Pseud.parse_byline(pseud_byline)
+      pseuds = Pseud.parse_byline(pseud_byline, assume_matching_login: true)
       if pseuds.size == 1
         pseud = pseuds.first
         signup = ChallengeSignup.in_collection(self.collection).where(pseud_id: pseud.id).first
