@@ -222,18 +222,34 @@ class ChallengeAssignment < ApplicationRecord
   def offering_user
     offering_pseud ? offering_pseud.user : nil
   end
+  # TODO: remove this clever workaround once we're not creating shared assignments anymore
+  def offering_users
+    offering_pseuds.map(&:user).uniq
+  end
 
   def offering_pseud
     offer_signup ? offer_signup.pseud : pinch_hitter
+  end
+  # TODO: remove this clever workaround once we're not creating shared assignments anymore
+  def offering_pseuds
+    [offer_signup&.pseud, pinch_hitter].compact.uniq
   end
 
   def requesting_pseud
     request_signup ? request_signup.pseud : (pinch_request_signup ? pinch_request_signup.pseud : nil)
   end
 
-
-  def offer_byline
-    offer_signup && offer_signup.pseud ? offer_signup.pseud.byline : (pinch_hitter ? (pinch_hitter.byline + "* (pinch hitter)") : "- none -")
+  def offer_byline(logged_in_user=nil)
+    if offering_users.size <= 1
+      offer_signup && offer_signup.pseud ? offer_signup.pseud.byline : (pinch_hitter ? (pinch_hitter.byline + "* (pinch hitter)") : "- none -")
+    # TODO: every other branch below needs to go away once we're not creating shared assignments anymore
+    elsif self.collection.user_is_maintainer?(logged_in_user)
+      offer_signup.pseud.byline + ", " + pinch_hitter.byline + "* (pinch hitter)"
+    elsif logged_in_user == offer_signup&.pseud&.user
+      offer_signup.pseud.byline
+    elsif logged_in_user == pinch_hitter&.user
+      pinch_hitter_byline + "* (pinch hitter)"
+    end
   end
 
   def request_byline
