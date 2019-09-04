@@ -13,7 +13,7 @@
     </dt>
     <dd>
      <%= label_tag "undefault_#{assignment.id}", :class => 'action' do %>
-        <%= ts("Undefault") %> <%= assignment.offer_byline %>  <%= check_box_tag "undefault_#{assignment.id}" %>
+        <%= ts("Undefault") %> <%= assignment.offer_byline(current_user) %>  <%= check_box_tag "undefault_#{assignment.id}" %>
       <% end %>
        <label class="autocomplete substitute" title="<%= ts('choose pinch hitter') %>"><%= ts("Pinch Hitter:") %> <%= text_field_tag "cover_#{assignment.id}", nil, autocomplete_options("pseud", :autocomplete_token_limit => 1) %></label>
     </dd>

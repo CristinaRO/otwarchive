@@ -205,7 +205,7 @@ class ChallengeAssignmentsController < ApplicationController
       case action
       when "default"
         # default_assignment_id = y/n
-        assignment.default || @errors << ts("We couldn't default the assignment for #{assignment.offer_byline}")
+        assignment.default || @errors << ts("We couldn't default the assignment for #{assignment.offer_byline(current_user)}")
       when "undefault"
         # undefault_[assignment_id] = y/n - if set, undefault
         assignment.defaulted_at = nil
@@ -243,8 +243,8 @@ class ChallengeAssignmentsController < ApplicationController
   def default
     @challenge_assignment.defaulted_at = Time.now
     @challenge_assignment.save
-    @challenge_assignment.collection.notify_maintainers("Challenge default by #{@challenge_assignment.offer_byline}",
-        "Signed-up participant #{@challenge_assignment.offer_byline} has defaulted on their assignment for #{@challenge_assignment.request_byline}. " +
+    @challenge_assignment.collection.notify_maintainers("Challenge default by #{@challenge_assignment.offer_byline(current_user)}",
+        "Signed-up participant #{@challenge_assignment.offer_byline(current_user)} has defaulted on their assignment for #{@challenge_assignment.request_byline}. " +
         "You may want to assign a pinch hitter on the collection assignments page: #{collection_assignments_url(@challenge_assignment.collection)}")
     flash[:notice] = "We have notified the collection maintainers that you had to default on your assignment."
     redirect_to user_assignments_path(@user)
