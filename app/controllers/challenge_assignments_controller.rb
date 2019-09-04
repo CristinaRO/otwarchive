@@ -58,7 +58,8 @@ class ChallengeAssignmentsController < ApplicationController
   end
 
   def owner_only
-    unless @user == @challenge_assignment.offering_pseud.user
+    # unless @user == @challenge_assignment.offering_pseud.user
+    unless @user.in?(@challenge_assignment.offering_users)
       flash[:error] = t("challenge_assignments.not_owner", default: "You aren't the owner of that assignment.")
       redirect_to "/" and return false
     end
@@ -138,7 +139,9 @@ class ChallengeAssignmentsController < ApplicationController
   end
 
   def show
-    unless @challenge.user_allowed_to_see_assignments?(current_user) || @challenge_assignment.offering_pseud.user == current_user
+    unless @challenge.user_allowed_to_see_assignments?(current_user) || 
+           current_user.in?(@challenge_assignment.offering_users)
+           # @challenge_assignment.offering_pseud.user == current_user
       flash[:error] = ts("You aren't allowed to see that assignment!")
       redirect_to "/" and return
     end
