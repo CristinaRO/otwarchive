@@ -212,6 +212,10 @@ When /^the user "(.*?)" accepts all (?:co-)?creator (?:invitations|invites)$/ do
   user.creatorships.unapproved.each(&:accept!)
 end
 
+When /^I activate my account with the token "(.*)"$/ do |confirmation_token|
+  visit activate_path(confirmation_token)
+end
+
 # THEN
 
 Then /^I should get the error message for wrong username or password$/ do

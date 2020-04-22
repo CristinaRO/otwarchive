@@ -4,7 +4,7 @@ class UsersController < ApplicationController
   before_action :check_user_status, only: [:edit, :update]
   before_action :load_user, except: [:activate, :delete_confirmation, :index]
   before_action :check_ownership, except: [:activate, :delete_confirmation, :index, :show]
-  skip_before_action :store_location, only: [:end_first_login]
+  skip_before_action :store_location, only: [:end_first_login, :activate]
 
   # This is meant to rescue from race conditions that sometimes occur on user creation
   # The unique index on login (database level) prevents the duplicate user from being created,
