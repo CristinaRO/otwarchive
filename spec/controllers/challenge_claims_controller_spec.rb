@@ -28,8 +28,9 @@ describe ChallengeClaimsController do
 
     context "for a prompt meme" do
       let(:signup) { create(:prompt_meme_signup) }
+      let!(:claim_by_other_user) { create(:challenge_claim, collection: collection, claiming_user: create(:user)) }
 
-      it "will not allow a logged in user to see everyone's claims" do
+      it "does not allow a logged in user to access the page with everyone's claims" do
         fake_login_known_user(user)
 
         get :index, params: { collection_id: collection.name }
@@ -37,14 +38,44 @@ describe ChallengeClaimsController do
         it_redirects_to_with_error(collection, "Sorry, you're not allowed to do that.")
       end
 
-      it "will allow a maintainer to see everyone's claims" do
-        collection.collection_participants.create(pseud: user.pseuds.first, participant_role: "Moderator")
+      it "does not allow a claiming user to access the page with everyone's claims" do
+        claim.update!(claiming_user: user)
         fake_login_known_user(user)
 
         get :index, params: { collection_id: collection.name }
 
-        expect(flash[:error]).to be_blank
-        expect(assigns(:claims))
+        it_redirects_to_with_error(collection, "Sorry, you're not allowed to do that.")
+      end
+
+      it "allows a claiming user to see their own claims" do
+        claim.update!(claiming_user: user)
+        fake_login_known_user(user)
+
+        get :index, params: { collection_id: collection.name, for_user: true }
+
+        claims = assigns(:claims)
+        expect(claims).to include(claim)
+        expect(claims).not_to include(claim_by_other_user)
+      end
+
+      context "for a maintainer" do
+        let(:other_signup) { create(:prompt_meme_signup) }
+        let!(:claim_in_other_collection) { create(:challenge_claim, collection: other_signup.collection) }
+
+        before do
+          collection.collection_participants.create(pseud: user.pseuds.first, participant_role: "Moderator")
+        end
+
+        it "allows them to see everyone's claims in the collection" do
+          fake_login_known_user(user)
+
+          get :index, params: { collection_id: collection.name }
+
+          claims = assigns(:claims)
+          expect(claims).to include(claim)
+          expect(claims).to include(claim_by_other_user)
+          expect(claims).not_to include(claim_in_other_collection)
+        end
       end
     end
   end
