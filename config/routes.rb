@@ -438,12 +438,7 @@ Otwarchive::Application.routes.draw do
         get :default_all
       end
     end
-    resources :claims, controller: "challenge_claims" do
-      collection do
-        patch :set
-        get :purge
-      end
-    end
+    resources :claims, controller: "challenge_claims"
     resources :potential_matches do
       collection do
         get :generate
