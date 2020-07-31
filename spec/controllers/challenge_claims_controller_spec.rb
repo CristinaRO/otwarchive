@@ -5,6 +5,7 @@ require "spec_helper"
 describe ChallengeClaimsController do
   include LoginMacros
   include RedirectExpectationHelper
+
   let(:user) { create(:user) }
   let(:signup) { create(:challenge_signup) }
   let(:collection) { signup.collection }
@@ -28,7 +29,7 @@ describe ChallengeClaimsController do
       get :index, params: { user_id: second_user.login }
 
       it_redirects_to_with_error(root_path, \
-                                 "You aren't allowed to see that user's claims.")
+                                 "Sorry, you're not allowed to do that.")
     end
 
     context "for a prompt meme" do
