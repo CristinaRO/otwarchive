@@ -32,9 +32,6 @@ class ChallengeClaimsController < ApplicationController
 				if params[:posted]
 					@claims = @user.request_claims.order_by_date.posted
 				end
-        if params[:collection_id] && (@collection = Collection.find_by(name: params[:collection_id]))
-          @claims = @claims.in_collection(@collection)
-        end
       else
         flash[:error] = ts("You aren't allowed to see that user's claims.")
         redirect_to '/' and return
