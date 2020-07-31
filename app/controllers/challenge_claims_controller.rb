@@ -100,7 +100,12 @@ class ChallengeClaimsController < ApplicationController
 
   def no_challenge
     flash[:error] = ts("What challenge did you want to work with?")
-    redirect_to collection_path(@collection) rescue redirect_to '/'
+    redirect_path = if @collection
+                      collection_path(@collection)
+                    else
+                      "/"
+                    end
+    redirect_to redirect_path
     false
   end
 
@@ -111,11 +116,14 @@ class ChallengeClaimsController < ApplicationController
 
   def no_claim
     flash[:error] = ts("What claim did you want to work on?")
-    if @collection
-      redirect_to collection_path(@collection) rescue redirect_to '/'
-    else
-      redirect_to user_path(@user) rescue redirect_to '/'
-    end
+    redirect_path = if @collection
+                      collection_path(@collection)
+                    elsif @user
+                      user_path(@user)
+                    else
+                      "/"
+                    end
+    redirect_to redirect_path
     false
   end
 
