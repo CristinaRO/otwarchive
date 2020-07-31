@@ -5,62 +5,6 @@ class ChallengeClaimsController < ApplicationController
   before_action :load_claim_from_id, only: [:show, :destroy]
   before_action :allowed_to_destroy, only: [:destroy]
 
-
-  # PERMISSIONS AND STATUS CHECKING
-
-  def load_challenge
-    if @collection
-      @challenge = @collection.challenge
-    elsif @challenge_claim
-      @challenge = @challenge_claim.collection.challenge
-    end
-    no_challenge and return unless @challenge
-  end
-
-  def no_challenge
-    flash[:error] = ts("What challenge did you want to work with?")
-    redirect_to collection_path(@collection) rescue redirect_to '/'
-    false
-  end
-
-  def load_claim_from_id
-    @challenge_claim = ChallengeClaim.find(params[:id])
-    no_claim and return unless @challenge_claim
-  end
-
-  def no_claim
-    flash[:error] = ts("What claim did you want to work on?")
-    if @collection
-      redirect_to collection_path(@collection) rescue redirect_to '/'
-    else
-      redirect_to user_path(@user) rescue redirect_to '/'
-    end
-    false
-  end
-
-  def load_user
-    @user = User.find_by(login: params[:user_id]) if params[:user_id]
-    no_user and return unless @user
-  end
-
-  def no_user
-    flash[:error] = ts("What user were you trying to work with?")
-    redirect_to "/" and return
-    false
-  end
-
-  def owner_only
-    unless @user == @challenge_claim.claiming_user
-      flash[:error] = ts("You aren't the claimer of that prompt.")
-      redirect_to "/" and return false
-    end
-  end
-
-  def allowed_to_destroy
-    @challenge_claim.user_allowed_to_destroy?(current_user) || not_allowed(@collection)
-  end
-
-
   # ACTIONS
 
   def index
@@ -141,6 +85,60 @@ class ChallengeClaimsController < ApplicationController
     params.require(:challenge_claim).permit(
       :collection_id, :request_signup_id, :request_prompt_id, :claiming_user_id
     )
+  end
+
+  # PERMISSIONS AND STATUS CHECKING
+
+  def load_challenge
+    if @collection
+      @challenge = @collection.challenge
+    elsif @challenge_claim
+      @challenge = @challenge_claim.collection.challenge
+    end
+    no_challenge and return unless @challenge
+  end
+
+  def no_challenge
+    flash[:error] = ts("What challenge did you want to work with?")
+    redirect_to collection_path(@collection) rescue redirect_to '/'
+    false
+  end
+
+  def load_claim_from_id
+    @challenge_claim = ChallengeClaim.find(params[:id])
+    no_claim and return unless @challenge_claim
+  end
+
+  def no_claim
+    flash[:error] = ts("What claim did you want to work on?")
+    if @collection
+      redirect_to collection_path(@collection) rescue redirect_to '/'
+    else
+      redirect_to user_path(@user) rescue redirect_to '/'
+    end
+    false
+  end
+
+  def load_user
+    @user = User.find_by(login: params[:user_id]) if params[:user_id]
+    no_user and return unless @user
+  end
+
+  def no_user
+    flash[:error] = ts("What user were you trying to work with?")
+    redirect_to "/" and return
+    false
+  end
+
+  def owner_only
+    unless @user == @challenge_claim.claiming_user
+      flash[:error] = ts("You aren't the claimer of that prompt.")
+      redirect_to "/" and return false
+    end
+  end
+
+  def allowed_to_destroy
+    @challenge_claim.user_allowed_to_destroy?(current_user) || not_allowed(@collection)
   end
 
   def user_scoped?
