@@ -8,9 +8,7 @@ class ChallengeClaimsController < ApplicationController
   # ACTIONS
 
   def index
-    if !(@collection = Collection.find_by(name: params[:collection_id])).nil? && @collection.closed? && !@collection.user_is_maintainer?(current_user)
-      flash[:notice] = ts("This challenge is currently closed to new posts.")
-    end
+    check_and_notify_closed_collection
     if params[:collection_id]
       return unless load_collection
 
@@ -88,6 +86,12 @@ class ChallengeClaimsController < ApplicationController
   end
 
   # PERMISSIONS AND STATUS CHECKING
+
+  def check_and_notify_closed_collection
+    return unless @collection&.closed? && !@collection.user_is_maintainer?(current_user)
+
+    flash[:notice] = ts("This challenge is currently closed to new posts.")
+  end
 
   def load_challenge
     if @collection
