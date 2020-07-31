@@ -12,7 +12,8 @@ class ChallengeClaimsController < ApplicationController
     if params[:collection_id]
       no_collection and return unless @collection
 
-      @challenge = @collection.challenge
+      load_challenge
+
       not_allowed(@collection) unless user_scoped? || @challenge.user_allowed_to_see_assignments?(current_user)
 
       @claims = ChallengeClaim.unposted_in_collection(@collection)
