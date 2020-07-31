@@ -13,9 +13,9 @@ describe ChallengeClaimsController do
   describe "index" do
     it "assigns claims and gives a notice if the collection is closed and the user is not the maintainer" do
       fake_login_known_user(user)
-      get :index, params: { id: claim.id, collection_id: collection.name, for_user: true }
       allow_any_instance_of(Collection).to receive(:closed?).and_return(true)
 
+      get :index, params: { collection_id: collection.name, for_user: true }
 
       expect(flash[:notice]).to include("This challenge is currently closed to new posts.")
       expect(assigns(:claims)).to be_an(ActiveRecord::Relation)
