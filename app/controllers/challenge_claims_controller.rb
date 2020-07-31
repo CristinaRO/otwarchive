@@ -27,12 +27,14 @@ class ChallengeClaimsController < ApplicationController
                   @claims.order(@sort_order)
                 end
     elsif params[:user_id] && (@user = User.find_by(login: params[:user_id]))
-        @claims = @user.request_claims.order_by_date.unposted
-				if params[:posted]
-					@claims = @user.request_claims.order_by_date.posted
-				end
       not_allowed unless current_user == @user
 
+      @claims = @user.request_claims.order_by_date
+      @claims = if params[:posted]
+                  @claims.posted
+                else
+                  @claims.unposted
+                end
     end
     @claims = @claims.paginate page: params[:page], per_page: ArchiveConfig.ITEMS_PER_PAGE
   end
