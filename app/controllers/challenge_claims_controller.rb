@@ -21,11 +21,11 @@ class ChallengeClaimsController < ApplicationController
       # sorting
       set_sort_order
 
-      if params[:sort] == "claimer"
-        @claims = @claims.order_by_offering_pseud(@sort_direction)
-      else
-        @claims = @claims.order(@sort_order)
-      end
+      @claims = if params[:sort] == "claimer"
+                  @claims.order_by_offering_pseud(@sort_direction)
+                else
+                  @claims.order(@sort_order)
+                end
     elsif params[:user_id] && (@user = User.find_by(login: params[:user_id]))
       if current_user == @user
         @claims = @user.request_claims.order_by_date.unposted
