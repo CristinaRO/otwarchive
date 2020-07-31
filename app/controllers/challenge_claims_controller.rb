@@ -72,7 +72,7 @@ class ChallengeClaimsController < ApplicationController
 
     begin
       @challenge_claim.destroy
-    rescue
+    rescue StandardError
       flash.delete(:notice)
       flash[:error] = ts("We couldn't delete that right now, sorry! Please try again later.")
     end
