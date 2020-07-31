@@ -10,7 +10,7 @@ class ChallengeClaimsController < ApplicationController
   def index
     check_and_notify_closed_collection
     if params[:collection_id]
-      return unless load_collection
+      no_collection and return unless @collection
 
       @challenge = @collection.challenge
       not_allowed(@collection) unless user_scoped? || @challenge.user_allowed_to_see_assignments?(current_user)
@@ -86,6 +86,13 @@ class ChallengeClaimsController < ApplicationController
   end
 
   # PERMISSIONS AND STATUS CHECKING
+
+  def no_collection
+    flash[:error] = t("challenge.no_collection",
+                      default: "What collection did you want to work with?")
+    redirect_to(request.env["HTTP_REFERER"] || root_path)
+    false
+  end
 
   def check_and_notify_closed_collection
     return unless @collection&.closed? && !@collection.user_is_maintainer?(current_user)
