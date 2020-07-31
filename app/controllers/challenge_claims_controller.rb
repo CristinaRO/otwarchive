@@ -2,7 +2,6 @@ class ChallengeClaimsController < ApplicationController
 
   before_action :users_only
   before_action :load_collection, except: [:index]
-  before_action :collection_owners_only, except: [:index, :show, :create, :destroy]
   before_action :load_claim_from_id, only: [:show, :destroy]
 
   before_action :load_challenge, except: [:index]
