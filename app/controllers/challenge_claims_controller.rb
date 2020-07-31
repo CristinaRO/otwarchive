@@ -130,13 +130,6 @@ class ChallengeClaimsController < ApplicationController
     false
   end
 
-  def owner_only
-    unless @user == @challenge_claim.claiming_user
-      flash[:error] = ts("You aren't the claimer of that prompt.")
-      redirect_to "/" and return false
-    end
-  end
-
   def allowed_to_destroy
     @challenge_claim.user_allowed_to_destroy?(current_user) || not_allowed(@collection)
   end
