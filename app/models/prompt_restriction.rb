@@ -9,6 +9,7 @@ class PromptRestriction < ApplicationRecord
   # it is used and how it behaves:
   #
   # challenge/gift_exchange
+  # challenge/prompt_meme
   #
 
   # VALIDATION
