@@ -1,5 +1,7 @@
 require 'faker'
 FactoryBot.define do
+  factory :prompt
+  factory :prompt_restriction
   factory :challenge_assignment do
     after(:build) do |assignment|
       assignment.collection_id = create(:collection, challenge: create(:gift_exchange)).id unless assignment.collection_id
@@ -66,4 +68,5 @@ FactoryBot.define do
       pm.prompt_restriction_id = create(:prompt_restriction).id
     end
   end
+  factory :challenge_claim
 end
