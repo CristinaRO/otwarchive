@@ -1,6 +1,6 @@
-require File.expand_path('../boot', __FILE__)
+require File.expand_path("boot", __dir__)
 
-require 'rails/all'
+require "rails/all"
 
 # If you have a Gemfile, require the gems listed there, including any gems
 # you've limited to :test, :development, or :production.
@@ -14,23 +14,23 @@ module Otwarchive
 
     # Custom directories with classes and modules you want to be autoloadable.
     # config.autoload_paths += %W(#{config.root}/extras)
-    config.eager_load_paths += %W(#{Rails.root}/lib)
-    config.autoload_paths += %W(#{Rails.root}/app/sweepers)
-    %w(
+    config.eager_load_paths += [Rails.root.join("lib")]
+    config.autoload_paths += [Rails.root.join("app/sweepers")]
+    %w[
       challenge_models
       tagset_models
       indexing
       search
       feedback_reporters
       potential_matcher
-    ).each do |dir|
-      config.autoload_paths << "#{Rails.root}/app/models/#{dir}"
+    ].each do |dir|
+      config.autoload_paths << Rails.root.join("app/models/#{dir}")
     end
 
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.
     # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
-    config.plugins = [ :all ]
+    config.plugins = [:all]
 
     # I18n validation deprecation warning fix
     #
@@ -46,10 +46,10 @@ module Otwarchive
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
-    config.time_zone = 'Eastern Time (US & Canada)'
+    config.time_zone = "Eastern Time (US & Canada)"
 
     # The default locale is :en and all translations from config/locales/**/*.rb,yml are auto loaded.
-    config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
+    config.i18n.load_path += Dir[Rails.root.join("config/locales/**/*.{rb,yml}")]
     # config.i18n.default_locale = :de
 
     # JavaScript files you want as :defaults (application.js is always included).
@@ -65,16 +65,13 @@ module Otwarchive
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:content, :password, :terms_of_service_non_production]
 
-    # configure middleware
-
-    ### things I'm preserving here from our Rails 2 environment.rb that we might or might not need
+    # Disable dumping schemas after migrations.
+    config.active_record.dump_schema_after_migration = false
 
     # Use SQL instead of Active Record's schema dumper when creating the test database.
     # This is necessary if your schema can't be completely dumped by the schema dumper,
     # like if you have constraints or database-specific column types
     config.active_record.schema_format = :sql
-
-    ### end of preservation section
 
     # handle errors with custom error pages:
     config.exceptions_app = self.routes
@@ -91,5 +88,15 @@ module Otwarchive
       "X-Download-Options" => "noopen",
       "X-Permitted-Cross-Domain-Policies" => "none"
     }
+
+    # Use Resque to run ActiveJobs (including sending delayed mail):
+    config.active_job.queue_adapter = :resque
+
+    # Use "mailer" instead of "mailers" as the Resque queue for emails:
+    config.action_mailer.deliver_later_queue_name = :mailer
+
+    # Use URL safe CSRF due to a bug in Rails v5.2.5 release.  See the v5.2.6 release notes:
+    # https://github.com/rails/rails/blob/5-2-stable/actionpack/CHANGELOG.md
+    config.action_controller.urlsafe_csrf_tokens = true
   end
 end

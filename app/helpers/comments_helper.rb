@@ -109,11 +109,11 @@ module CommentsHelper
   #### HELPERS FOR CHECKING WHICH BUTTONS/FORMS TO DISPLAY #####
 
   def can_reply_to_comment?(comment)
-    !(comment.unreviewed? || no_anon_reply(comment) || comment_parent_hidden?(comment))
+    !(comment.unreviewed? || comment.iced? || parent_disallows_comments?(comment) || comment_parent_hidden?(comment))
   end
 
   def can_edit_comment?(comment)
-    is_author_of?(comment) && comment.count_all_comments == 0 && !comment_parent_hidden?(comment)
+    is_author_of?(comment) && !comment.iced? && comment.count_all_comments.zero? && !comment_parent_hidden?(comment)
   end
 
   # Only an admin with proper authorization can mark a spam comment ham.
@@ -135,9 +135,19 @@ module CommentsHelper
   # (if the creator is a registered user), or the creator of the comment's
   # ultimate parent.
   def can_destroy_comment?(comment)
-    policy(comment).can_destroy_comment? || 
-      is_author_of?(comment) || 
+    policy(comment).can_destroy_comment? ||
+      is_author_of?(comment) ||
       is_author_of?(comment.ultimate_parent)
+  end
+
+  # Comments on works can be frozen by admins with proper authorization or the
+  # work creator.
+  # Comments on tags can be frozen by admins with proper authorization.
+  # Comments on admin posts can be frozen by any admin.
+  def can_freeze_comment?(comment)
+    policy(comment).can_freeze_comment? ||
+      comment.ultimate_parent.is_a?(Work) &&
+        is_author_of?(comment.ultimate_parent)
   end
 
   def comment_parent_hidden?(comment)
@@ -146,8 +156,12 @@ module CommentsHelper
       (parent.respond_to?(:in_unrevealed_collection) && parent.in_unrevealed_collection)
   end
 
-  def no_anon_reply(comment)
-    comment.ultimate_parent.is_a?(Work) && comment.ultimate_parent.anon_commenting_disabled && !logged_in?
+  def parent_disallows_comments?(comment)
+    parent = comment.ultimate_parent
+    return false unless parent.is_a?(Work) || parent.is_a?(AdminPost)
+
+    parent.disable_all_comments? ||
+      parent.disable_anon_comments? && !logged_in?
   end
 
   #### HELPERS FOR REPLYING TO COMMENTS #####
@@ -264,6 +278,19 @@ module CommentsHelper
     else
       delete_comment_link(comment)
     end
+  end
+
+  def freeze_comment_button(comment)
+    if comment.iced?
+      button_to ts("Unfreeze Thread"), unfreeze_comment_path(comment), method: :put
+    else
+      button_to ts("Freeze Thread"), freeze_comment_path(comment), method: :put
+    end
+  end
+
+  # Not a link or button, but included with them.
+  def frozen_comment_indicator
+    content_tag(:span, ts("Frozen"), class: "frozen current")
   end
 
   # return html link to delete comments

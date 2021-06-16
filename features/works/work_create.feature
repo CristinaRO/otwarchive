@@ -122,7 +122,7 @@ Feature: Create Works
       And I should see "Pseud2" within ".byline"
       And I should see "Pseud3" within ".byline"
       But I should not see "coauthor" within ".byline"
-    When the user "coauthor" accepts all creator invites
+    When the user "coauthor" accepts all co-creator requests
       And I view the work "All Something Breaks Loose"
     Then I should see "coauthor" within ".byline"
     When I follow "Add Chapter"
@@ -155,7 +155,7 @@ Feature: Create Works
       And I should see "Pseud3" within ".byline"
       But I should not see "cosomeone" within ".byline"
       And 1 email should be delivered to "cosomeone@example.org"
-    When the user "cosomeone" accepts all creator invites
+    When the user "cosomeone" accepts all co-creator requests
       And I view the work "All Something Breaks Loose"
     Then I should see "cosomeone" within ".byline"
     When all emails have been delivered
@@ -222,7 +222,7 @@ Feature: Create Works
       And I press "Preview"
     Then I should see "Sorry! We couldn't save this work because:"
       And I should see a collection not found message for "collection1"
-      And "My new series" should be selected within "Choose one of your existing series:"
+      And I should see "My new series" in the "Or create and use a new one:" input
       And I should not see "Remove Work From Series"
 
   Scenario: Creating a new work in an existing series with some invalid things should return to the new work page with an error message and series information still filled in
@@ -333,7 +333,7 @@ Feature: Create Works
     Then I should see "Work was successfully posted. It should appear in work listings within the next few minutes."
       And I should not see "Me (myself)"
       And I should see "My new series"
-    When the user "myself" accepts all creator invites
+    When the user "myself" accepts all co-creator requests
       And I view the work "All Hell Breaks Loose"
     Then I should see "Me (myself), testuser"
 
@@ -355,7 +355,7 @@ Feature: Create Works
     When I press "Post"
     Then I should see "Work was successfully posted. It should appear in work listings within the next few minutes."
       But I should not see "Michael (Burnham)"
-    When the user "Burnham" accepts all creator invites
+    When the user "Burnham" accepts all co-creator requests
       And I view the work "Thats not my Spock"
     Then I should see "Michael (Burnham), testuser"
 
@@ -384,7 +384,7 @@ Feature: Create Works
     When I am logged in as "barbaz"
       And I view the work "Chaptered Work"
     Then I should not see "Edit"
-    When I follow "Creator Invitations page"
+    When I follow "Co-Creator Requests page"
       And I check "selected[]"
       And I press "Accept"
     Then I should see "You are now listed as a co-creator on Chaptered Work."
@@ -395,3 +395,17 @@ Feature: Create Works
     When I follow "Next Chapter"
     Then I should see "barbaz, foobar"
       And I should not see "Chapter by"
+
+  @javascript
+  Scenario: Please wait should disappear after fixing errors when creating work
+    Given basic tags
+      And I am logged in as "test_user"
+    When I go to the new work page
+      And I fill in "Work Title" with "Unicorns Abound"
+      And I select "English" from "Choose a language"
+      And I fill in "Fandoms" with "Dallas"
+      And I press "Post"
+    Then I should see "Brevity is the soul of wit, but your content does have to be at least 10 characters long."
+      And I should see a button with text "Please wait..."
+    When I fill in "content" with "help there are unicorns everywhere"
+    Then I should see a button with text "Post"

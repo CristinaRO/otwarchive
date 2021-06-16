@@ -1,6 +1,6 @@
-require 'cucumber/rspec/doubles'
-require 'cucumber/timecop'
-require 'email_spec/cucumber'
+require "cucumber/rspec/doubles"
+require "cucumber/timecop"
+require "email_spec/cucumber"
 
 Before do
   # Create default settings if necessary, since the database is truncated
@@ -13,6 +13,9 @@ Before do
   # Create default language and locale.
   Locale.default
 
+  # Clears used values for all generators.
+  Faker::UniqueGenerator.clear
+
   # Assume all spam checks pass by default.
   allow(Akismetor).to receive(:spam?).and_return(false)
 
@@ -21,6 +24,10 @@ Before do
 
   # Clear Memcached
   Rails.cache.clear
+
+  # Remove old tag feeds
+  page_cache_dir = Rails.root.join("public/test_cache")
+  FileUtils.remove_dir(page_cache_dir, true) if Dir.exist?(page_cache_dir)
 
   # Clear Redis
   REDIS_AUTOCOMPLETE.flushall
@@ -48,4 +55,9 @@ end
 
 After "@disable_caching" do
   ActionController::Base.perform_caching = true
+end
+
+Before "@skins" do
+  # Create a default skin:
+  AdminSetting.current.update_attribute(:default_skin, Skin.default)
 end

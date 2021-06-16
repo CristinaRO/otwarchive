@@ -35,12 +35,11 @@ Feature: Edit preferences
     And I should see "Turn off emails from collections."
     And I should see "Turn off inbox messages from collections."
     And I should see "Turn off emails about gift works."
-    And I should see "Turn on Viewing History."
+    And I should see "Turn on History."
     And I should see "Turn the new user help banner back on."
     And I should see "Turn off the banner showing on every page."
 
-
-  Scenario: View and edit preferences for viewing history, view entire work
+  Scenario: View and edit preferences for history, personal details, view entire work
 
   Given the following activated user exists
     | login         | password   |
@@ -71,7 +70,7 @@ Feature: Edit preferences
   Then I should see "Set My Preferences"
   When I follow "Set My Preferences"
   Then I should see "Edit My Profile"
-  When I uncheck "Turn on Viewing History"
+  When I uncheck "Turn on History"
     And I check "Show the whole work by default."
     And I press "Update"
   Then I should see "Your preferences were successfully updated"

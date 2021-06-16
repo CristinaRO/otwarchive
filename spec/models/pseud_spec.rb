@@ -60,15 +60,7 @@ describe Pseud do
       allow(ArchiveConfig).to receive(:ITEMS_PER_PAGE).and_return(3)
     end
 
-    it "returns a maximum of ITEMS_PER_PAGE pseuds" do
-      expect(subject.count).to eq(3)
-    end
-
-    it "always contains the default pseud first" do
-      expect(subject.first.name).to eq("Zaphod")
-    end
-
-    it "is in alphabetical order after the default pseud" do
+    it "is in alphabetical order after the default pseud and returns a maximum of ITEMS_PER_PAGE pseuds" do
       expect(subject.map(&:name)).to eq(%w[Zaphod Agrajag Betelgeuse])
     end
   end

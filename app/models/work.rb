@@ -190,10 +190,10 @@ class Work < ApplicationRecord
           # Check to see if this work is being deleted by an Admin
           if User.current_user.is_a?(Admin)
             # this has to use the synchronous version because the work is going to be destroyed
-            UserMailer.admin_deleted_work_notification(user, self).deliver!
+            UserMailer.admin_deleted_work_notification(user, self).deliver_now
           else
             # this has to use the synchronous version because the work is going to be destroyed
-            UserMailer.delete_work_notification(user, self).deliver!
+            UserMailer.delete_work_notification(user, self).deliver_now
           end
         end
       end
@@ -499,13 +499,6 @@ class Work < ApplicationRecord
     end
   end
 
-  def unrestricted=(setting)
-    if setting == "1"
-      self.restricted = false
-    end
-  end
-  def unrestricted; !self.restricted; end
-
   def unrevealed?(user=User.current_user)
     # eventually here is where we check if it's in a challenge that hasn't been made public yet
     #!self.collection_items.unrevealed.empty?
@@ -612,8 +605,9 @@ class Work < ApplicationRecord
         errors.add(:base, ts("You can't add a work to that series."))
         return
       end
-      self.series << old_series unless (old_series.blank? || self.series.include?(old_series))
-      self.adjust_series_restriction
+      unless old_series.blank? || self.series.include?(old_series)
+        self.serial_works.build(series: old_series)
+      end
     elsif !attributes[:title].blank?
       new_series = Series.new
       new_series.title = attributes[:title]
@@ -623,8 +617,7 @@ class Work < ApplicationRecord
         # on the serial work will do the rest.
         new_series.creatorships.build(pseud: pseud)
       end
-      new_series.save
-      self.series << new_series
+      self.serial_works.build(series: new_series)
     end
   end
 
@@ -647,11 +640,13 @@ class Work < ApplicationRecord
   # If the work is posted, the first chapter should be posted too
   def post_first_chapter
     chapter_one = self.first_chapter
-    if self.saved_change_to_posted? || (chapter_one && chapter_one.posted != self.posted)
-      chapter_one.published_at = Date.today unless self.backdate
-      chapter_one.posted = self.posted
-      chapter_one.save
-    end
+
+    return unless self.saved_change_to_posted? && self.posted
+    return if chapter_one&.posted
+
+    chapter_one.published_at = Date.today unless self.backdate
+    chapter_one.posted = true
+    chapter_one.save
   end
 
   # Virtual attribute for first chapter
@@ -777,7 +772,13 @@ class Work < ApplicationRecord
         self.word_count += chapter.set_word_count
       end
     else
-      self.word_count = Chapter.select("SUM(word_count) AS work_word_count").where(work_id: self.id, posted: true).first.work_word_count
+      # AO3-3498: For posted works, the word count is visible to people other than the creator and 
+      # should only include posted chapters. For drafts, we can count everything.
+      self.word_count = if self.posted
+                          Chapter.select("SUM(word_count) AS work_word_count").where(work_id: self.id, posted: true).first.work_word_count
+                        else
+                          Chapter.select("SUM(word_count) AS work_word_count").where(work_id: self.id).first.work_word_count
+                        end
     end
   end
 
@@ -922,30 +923,9 @@ class Work < ApplicationRecord
     counter = self.stat_counter || self.create_stat_counter
     counter.update_attributes(
       kudos_count: self.kudos.count,
-      comments_count: self.count_visible_comments,
+      comments_count: self.count_visible_comments_uncached,
       bookmarks_count: self.bookmarks.where(private: false).count
     )
-  end
-
-  def comment_permissions=(value)
-    return unless has_attribute?(:comment_permissions)
-
-    write_attribute(:comment_permissions, value)
-
-    # Map the special value back to an integer, and write it to the
-    # anon_commenting_disabled column so that if we do have to revert, we can
-    # go back to using the anon_commenting_disabled column without data loss.
-    write_attribute(:anon_commenting_disabled,
-                    Work.comment_permissions[comment_permissions])
-  end
-
-  def anon_commenting_disabled=(value)
-    write_attribute(:anon_commenting_disabled, value)
-
-    if has_attribute?(:comment_permissions)
-      write_attribute(:comment_permissions,
-                      anon_commenting_disabled ? :disable_anon : :enable_all)
-    end
   end
 
   ########################################################################
@@ -1029,7 +1009,6 @@ class Work < ApplicationRecord
   scope :ordered_by_hit_count_asc, -> { order("hit_count ASC") }
   scope :ordered_by_date_desc, -> { order("revised_at DESC") }
   scope :ordered_by_date_asc, -> { order("revised_at ASC") }
-  scope :random_order, -> { order("RAND()") }
 
   scope :recent, lambda { |*args| where("revised_at > ?", (args.first || 4.weeks.ago.to_date)) }
   scope :within_date_range, lambda { |*args| where("revised_at BETWEEN ? AND ?", (args.first || 4.weeks.ago), (args.last || Time.now)) }
@@ -1211,12 +1190,14 @@ class Work < ApplicationRecord
       methods: [
         :tag, :filter_ids, :rating_ids, :archive_warning_ids, :category_ids,
         :fandom_ids, :character_ids, :relationship_ids, :freeform_ids,
-        :pseud_ids, :creators, :collection_ids, :work_types
+        :creators, :collection_ids, :work_types
       ]
     ).merge(
       language_id: language&.short,
       anonymous: anonymous?,
       unrevealed: unrevealed?,
+      pseud_ids: anonymous? || unrevealed? ? nil : pseud_ids,
+      user_ids: anonymous? || unrevealed? ? nil : user_ids,
       bookmarkable_type: 'Work',
       bookmarkable_join: { name: "bookmarkable" }
     )
@@ -1226,15 +1207,8 @@ class Work < ApplicationRecord
     approved_collections.pluck(:id, :parent_id).flatten.uniq.compact
   end
 
-  def comments_count
-    self.stat_counter.comments_count
-  end
-  def kudos_count
-    self.stat_counter.kudos_count
-  end
-  def bookmarks_count
-    self.stat_counter.bookmarks_count
-  end
+  delegate :comments_count, :kudos_count, :bookmarks_count,
+           to: :stat_counter, allow_nil: true
 
   def hits
     stat_counter&.hit_count

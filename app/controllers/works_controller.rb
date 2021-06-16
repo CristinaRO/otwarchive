@@ -138,10 +138,7 @@ class WorksController < ApplicationController
     options[:page] = params[:page] || 1
     options[:show_restricted] = current_user.present? || logged_in_as_admin?
 
-    @user = User.find_by(login: params[:user_id])
-
-    return unless @user.present?
-
+    @user = User.find_by!(login: params[:user_id])
     @search = WorkSearchForm.new(options.merge(works_parent: @user, collected: true))
     @works = @search.search_results
     flash_search_warnings(@works)
@@ -213,7 +210,7 @@ class WorksController < ApplicationController
     end
 
     @tag_categories_limited = Tag::VISIBLE - ['ArchiveWarning']
-    @kudos = @work.kudos.with_user.includes(:user).by_date
+    @kudos = @work.kudos.with_user.includes(:user)
 
     if current_user.respond_to?(:subscriptions)
       @subscription = current_user.subscriptions.where(subscribable_id: @work.id,
@@ -302,6 +299,7 @@ class WorksController < ApplicationController
     end
 
     @work = Work.new(work_params)
+
     @chapter = @work.first_chapter
     @chapter.attributes = work_params[:chapter_attributes] if work_params[:chapter_attributes]
     @work.ip_address = request.remote_ip
@@ -455,7 +453,7 @@ class WorksController < ApplicationController
       was_draft = !@work.posted?
       title = @work.title
       @work.destroy
-      flash[:notice] = ts('Your work %{title} was deleted.', title: title)
+      flash[:notice] = ts("Your work %{title} was deleted.", title: title).html_safe
     rescue
       flash[:error] = ts("We couldn't delete that right now, sorry! Please try again later.")
     end
@@ -634,6 +632,11 @@ class WorksController < ApplicationController
       redirect_to(edit_user_work_path(@user, @work)) && return
     end
 
+    # AO3-3498: since a work's word count is calculated in a before_save and the chapter is posted in an after_save, 
+    # work's word count needs to be updated with the chapter's word count after the chapter is posted
+    @work.set_word_count
+    @work.save
+
     if !@collection.nil? && @collection.moderated?
       redirect_to work_path(@work), notice: ts('Work was submitted to a moderated collection. It will show up in the collection once approved.')
     else
@@ -692,30 +695,8 @@ class WorksController < ApplicationController
     @works = Work.joins(pseuds: :user).where('users.id = ?', @user.id).where(id: params[:work_ids]).readonly(false)
     @errors = []
 
-    # To avoid overwriting, we entirely trash any blank fields and also any
-    # unchecked checkboxes.
-    #
-    # Note that in the current edit_multiple form, we don't actually have any
-    # fields with value 0 (the hidden input used for unchecked checkboxes). So
-    # in a future release, it would be good to stop rejecting the params with
-    # value == '0', and stop checking for these special values below. But for
-    # compatibility with the existing form, we need to keep this code as is for
-    # now, and change it incrementally.
-    updated_work_params = work_params.reject { |_key, value| value.blank? || value == '0' }
-
-    # Special values which would normally be represented by 0, but can't
-    # because of the filter on updated_work_params.
-    if updated_work_params[:anon_commenting_disabled] == 'allow_anon'
-      updated_work_params[:anon_commenting_disabled] = '0'
-    end
-
-    if updated_work_params[:moderated_commenting_enabled] == 'not_moderated'
-      updated_work_params[:moderated_commenting_enabled] = '0'
-    end
-
-    if updated_work_params[:restricted] == 'unrestricted'
-      updated_work_params[:restricted] = '0'
-    end
+    # To avoid overwriting, we entirely trash any blank fields.
+    updated_work_params = work_params.reject { |_key, value| value.blank? }
 
     @works.each do |work|
       # now we can just update each work independently, woo!
@@ -929,9 +910,8 @@ class WorksController < ApplicationController
       :rating_string, :fandom_string, :relationship_string, :character_string,
       :archive_warning_string, :category_string, :expected_number_of_chapters, :revised_at,
       :freeform_string, :summary, :notes, :endnotes, :collection_names, :recipients, :wip_length,
-      :backdate, :language_id, :work_skin_id, :restricted, :anon_commenting_disabled, :comment_permissions,
+      :backdate, :language_id, :work_skin_id, :restricted, :comment_permissions,
       :moderated_commenting_enabled, :title, :pseuds_to_add, :collections_to_add,
-      :unrestricted,
       current_user_pseud_ids: [],
       collections_to_remove: [],
       challenge_assignment_ids: [],

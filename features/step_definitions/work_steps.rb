@@ -1,3 +1,5 @@
+require "cgi"
+
 DEFAULT_TITLE = "My Work Title"
 DEFAULT_FANDOM = "Stargate SG-1"
 DEFAULT_RATING = "Not Rated"
@@ -123,7 +125,7 @@ Given /^I have no works or comments$/ do
 end
 
 Given /^the chaptered work(?: with ([\d]+) chapters)?(?: with ([\d]+) comments?)? "([^"]*)"$/ do |n_chapters, n_comments, title|
-  step %{I am logged out}
+  step %{I start a new session}
   step %{basic tags}
 
   title ||= "Blabla"
@@ -162,25 +164,25 @@ Given /^I have a multi-chapter draft$/ do
 end
 
 Given /^the work(?: "([^"]*)")? with(?: (\d+))? comments setup$/ do |title, n_comments|
-  step %{I am logged out}
+  step %{I start a new session}
   step %{basic tags}
 
   title ||= "Blabla"
   work = FactoryBot.create(:work, title: title)
 
-  n_comments ||= 3
+  n_comments = 3 if n_comments.blank? || n_comments.zero?
   FactoryBot.create_list(:comment, n_comments.to_i, :by_guest,
                          commentable: work.last_posted_chapter)
 end
 
 Given /^the work(?: "([^"]*)")? with(?: (\d+))? bookmarks? setup$/ do |title, n_bookmarks|
-  step %{I am logged out}
+  step %{I start a new session}
   step %{basic tags}
 
   title ||= "Blabla"
   work = FactoryBot.create(:work, title: title)
 
-  n_bookmarks ||= 3
+  n_bookmarks = 3 if n_bookmarks.blank? || n_bookmarks.zero?
   FactoryBot.create_list(:bookmark, n_bookmarks.to_i, bookmarkable: work)
 end
 
@@ -198,13 +200,13 @@ Given /^the chaptered work with comments setup$/ do
     step %{I view the #{i.to_s}th chapter}
     step %{I post a comment "Woohoo"}
   end
-  step "I am logged out"
+  step "I log out"
 end
 
 Given /^the work "([^"]*)"$/ do |work|
   unless Work.where(title: work).exists?
     step %{I have a work "#{work}"}
-    step %{I am logged out}
+    step %{I log out}
   end
 end
 
@@ -218,14 +220,14 @@ Given /^there is a work "([^"]*)" in an unrevealed collection "([^"]*)"$/ do |wo
   step %{I have the hidden collection "#{collection}"}
   step %{I am logged in as a random user}
   step %{I post the work "#{work}" to the collection "#{collection}"}
-  step %{I am logged out}
+  step %{I log out}
 end
 
 Given /^there is a work "([^"]*)" in an anonymous collection "([^"]*)"$/ do |work, collection|
   step %{I have the anonymous collection "#{collection}"}
   step %{I am logged in as a random user}
   step %{I post the work "#{work}" to the collection "#{collection}"}
-  step %{I am logged out}
+  step %{I log out}
 end
 
 Given /^I am logged in as the author of "([^"]*)"$/ do |work|
@@ -235,7 +237,7 @@ end
 
 Given /^the spam work "([^\"]*)"$/ do |work|
   step %{I have a work "#{work}"}
-  step %{I am logged out}
+  step %{I log out}
   w = Work.find_by_title(work)
   w.update_attribute(:spam, true)
   w.update_attribute(:hidden_by_admin, true)
@@ -309,7 +311,7 @@ When /^a chapter with the co-author "([^\"]*)" is added to "([^\"]*)"$/ do |coau
   step %{a chapter is set up for "#{work_title}"}
   step %{I invite the co-author "#{coauthor}"}
   click_button("Post")
-  step %{the user "#{coauthor}" accepts all co-creator invitations}
+  step %{the user "#{coauthor}" accepts all co-creator requests}
   step %{all indexing jobs have been run}
   Tag.write_redis_to_database
 end
@@ -372,7 +374,7 @@ end
 
 When /^I fill in basic external work tags$/ do
   select(DEFAULT_RATING, from: "Rating")
-  fill_in("bookmark_external_fandom_string", with: DEFAULT_FANDOM)
+  fill_in("external_work_fandom_string", with: DEFAULT_FANDOM)
   fill_in("bookmark_tag_string", with: DEFAULT_FREEFORM)
 end
 
@@ -410,14 +412,23 @@ When /^I edit multiple works with different comment moderation settings$/ do
   step %{I press "Edit"}
 end
 
-When /^I edit multiple works with different anonymous commenting settings$/ do
-  step %{I set up the draft "Work with Anonymous Commenting Disabled"}
-  check("work_anon_commenting_disabled")
+When /^I edit multiple works with different commenting settings$/ do
+  step %{I set up the draft "Work with All Commenting Enabled"}
+  choose("Registered users and guests can comment")
   step %{I post the work without preview}
-  step %{I post the work "Work with Anonymous Commenting Enabled"}
+
+  step %{I set up the draft "Work with Anonymous Commenting Disabled"}
+  choose("Only registered users can comment")
+  step %{I post the work without preview}
+
+  step %{I set up the draft "Work with All Commenting Disabled"}
+  choose("No one can comment")
+  step %{I post the work without preview}
+
   step %{I go to my edit multiple works page}
+  step %{I select "Work with All Commenting Enabled" for editing}
   step %{I select "Work with Anonymous Commenting Disabled" for editing}
-  step %{I select "Work with Anonymous Commenting Enabled" for editing}
+  step %{I select "Work with All Commenting Disabled" for editing}
   step %{I press "Edit"}
 end
 
@@ -523,7 +534,7 @@ When /^I browse the "(.*?)" works with page parameter "(.*?)"$/ do |tagname, pag
 end
 
 When /^I delete the work "([^"]*)"$/ do |work|
-  work = Work.find_by(title: work)
+  work = Work.find_by(title: CGI.escapeHTML(work))
   visit edit_work_path(work)
   step %{I follow "Delete Work"}
   # If JavaScript is enabled, window.confirm will be used and this button will not appear
@@ -633,12 +644,26 @@ When /^I follow the recent chapter link for the work "([^\"]*)"$/ do |work|
   find("#work_#{work_id} dd.chapters a").click
 end
 
-When /^the statistics for the work "([^"]*)" are updated$/ do |title|
-  step %{the statistics for all works are updated}
-  step %{all indexing jobs have been run}
+When "I follow the kudos link for the work {string}" do |work|
+  work = Work.find_by(title: work)
+  find("#work_#{work.id} dd.kudos a").click
+end
+
+When "I follow the comments link for the work {string}" do |work|
+  work = Work.find_by(title: work)
+  find("#work_#{work.id} dd.comments a").click
+end
+
+When "the cache for the work {string} is cleared" do |title|
   work = Work.find_by(title: title)
   # Touch the work to actually expire the cache
   work.touch
+end
+
+When "the statistics for the work {string} are updated" do |title|
+  step %{the statistics for all works are updated}
+  step %{all indexing jobs have been run}
+  step %{the cache for the work "#{title}" is cleared}
 end
 
 When /^the hit counts for all works are updated$/ do
@@ -694,11 +719,12 @@ Then /^the Remove Me As Chapter Co-Creator option should not be on the ([\d]+)(?
   step %{I should not see "Remove Me As Chapter Co-Creator" within "ul#sortable_chapter_list > li:nth-of-type(#{chapter_number})"}
 end
 
-Then /^the share modal should contain a Twitter share button$/ do
-  with_scope('#share') do
-    iframe = find('li.twitter #twitter-widget-0')
-    within_frame(iframe) do
-      page.should have_content("Tweet")
-    end
-  end
+Then "I should see {string} within the work blurb of {string}" do |content, work|
+  work = Work.find_by(title: work)
+  step %{I should see "#{content}" within "li#work_#{work.id}"}
+end
+
+Then "I should not see {string} within the work blurb of {string}" do |content, work|
+  work = Work.find_by(title: work)
+  step %{I should not see "#{content}" within "li#work_#{work.id}"}
 end

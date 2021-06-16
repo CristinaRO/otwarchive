@@ -122,6 +122,8 @@ class Tag < ApplicationRecord
   has_many :filter_taggings, foreign_key: 'filter_id', dependent: :destroy
   has_many :filtered_works, through: :filter_taggings, source: :filterable, source_type: 'Work'
   has_many :filtered_external_works, through: :filter_taggings, source: :filterable, source_type: "ExternalWork"
+  has_many :filtered_collections, through: :filter_taggings, source: :filterable, source_type: "Collection"
+
   has_one :filter_count, foreign_key: 'filter_id'
   has_many :direct_filter_taggings,
               -> { where(inherited: 0) },
@@ -148,6 +150,7 @@ class Tag < ApplicationRecord
   has_many :direct_sub_tags, -> { where('meta_taggings.direct = 1') }, through: :sub_taggings, source: :sub_tag
   has_many :taggings, as: :tagger
   has_many :works, through: :taggings, source: :taggable, source_type: 'Work'
+  has_many :collections, through: :taggings, source: :taggable, source_type: "Collection"
 
   has_many :bookmarks, through: :taggings, source: :taggable, source_type: 'Bookmark'
   has_many :external_works, through: :taggings, source: :taggable, source_type: 'ExternalWork'
@@ -176,13 +179,10 @@ class Tag < ApplicationRecord
 
   validate :unwrangleable_status
   def unwrangleable_status
-    if unwrangleable? && (canonical? || merger_id.present?)
-      self.errors.add(:unwrangleable, "can't be set on a canonical or synonymized tag.")
-    end
+    return unless unwrangleable?
 
-    if unwrangleable? && is_a?(UnsortedTag)
-      self.errors.add(:unwrangleable, "can't be set on an unsorted tag.")
-    end
+    self.errors.add(:unwrangleable, "can't be set on a canonical or synonymized tag.") if canonical? || merger_id.present?
+    self.errors.add(:unwrangleable, "can't be set on an unsorted tag.") if is_a?(UnsortedTag)
   end
 
   before_validation :check_synonym
@@ -286,22 +286,6 @@ class Tag < ApplicationRecord
   # Tags that don't have sub tags
   scope :non_meta_tag, -> { joins(:sub_taggings).where("meta_taggings.id IS NULL").group("tags.id") }
 
-
-  # Complicated query alert!
-  # What we're doing here:
-  # - we get all the tags of any type used on works (the first two lines of the join)
-  # - we then chop that down to only the tags used on works that are tagged with our one given tag
-  #   (the last line of the join, and the where clause)
-  scope :related_tags_for_all, lambda {|tags|
-    joins("INNER JOIN taggings ON (tags.id = taggings.tagger_id)
-           INNER JOIN works ON (taggings.taggable_id = works.id AND taggings.taggable_type = 'Work')
-           INNER JOIN taggings taggings2 ON (works.id = taggings2.taggable_id AND taggings2.taggable_type = 'Work')").
-    where("taggings2.tagger_id IN (?)", tags.collect(&:id)).
-    group("tags.id")
-  }
-
-  scope :related_tags, lambda {|tag| related_tags_for_all([tag])}
-
   scope :by_popularity, -> { order('taggings_count_cache DESC') }
   scope :by_name, -> { order('sortable_name ASC') }
   scope :by_date, -> { order('created_at DESC') }
@@ -326,14 +310,6 @@ class Tag < ApplicationRecord
   }
 
   scope :starting_with, lambda {|letter| where('SUBSTR(name,1,1) = ?', letter)}
-
-  scope :filters_with_count, lambda { |work_ids|
-    select("tags.*, count(distinct works.id) as count").
-    joins(:filtered_works).
-    where("works.id IN (?)", work_ids).
-    order(:name).
-    group(:id)
-  }
 
   scope :visible_to_all_with_count, -> {
     joins(:filter_count).
@@ -367,8 +343,8 @@ class Tag < ApplicationRecord
 
   scope :random, -> {
     (User.current_user.is_a?(Admin) || User.current_user.is_a?(User)) ?
-    visible_to_registered_user_with_count.order("RAND()") :
-    visible_to_all_with_count.order("RAND()")
+    visible_to_registered_user_with_count.random_order :
+    visible_to_all_with_count.random_order
   }
 
   scope :with_count, -> {
@@ -451,11 +427,11 @@ class Tag < ApplicationRecord
 
   def self.by_name_without_articles(fieldname = "name")
     fieldname = "name" unless fieldname.match(/^([\w]+\.)?[\w]+$/)
-    order("case when lower(substring(#{fieldname} from 1 for 4)) = 'the ' then substring(#{fieldname} from 5)
+    order(Arel.sql("case when lower(substring(#{fieldname} from 1 for 4)) = 'the ' then substring(#{fieldname} from 5)
             when lower(substring(#{fieldname} from 1 for 2)) = 'a ' then substring(#{fieldname} from 3)
             when lower(substring(#{fieldname} from 1 for 3)) = 'an ' then substring(#{fieldname} from 4)
             else #{fieldname}
-            end")
+            end"))
   end
 
   def self.in_tag_set(tag_set)
@@ -698,6 +674,7 @@ class Tag < ApplicationRecord
   def update_filters_for_taggables
     works.update_filters
     external_works.update_filters
+    collections.update_filters
   end
 
   # Update filters for all works and external works that already have this tag
@@ -705,6 +682,7 @@ class Tag < ApplicationRecord
   def update_filters_for_filterables
     filtered_works.update_filters
     filtered_external_works.update_filters
+    filtered_collections.update_filters
   end
 
   # When canonical or merger_id changes, only the items directly tagged with
@@ -767,10 +745,6 @@ class Tag < ApplicationRecord
 
   def visible_external_works_count
     self.external_works.where(hidden_by_admin: false).count
-  end
-
-  def visible_taggables_count
-    visible_works_count + visible_bookmarks_count + visible_external_works_count
   end
 
   def banned
@@ -967,7 +941,7 @@ class Tag < ApplicationRecord
     sub_taggings.destroy_invalid
   end
 
-  # defines fandom_string=, media_string=, character_string=, relationship_string=, freeform_string= 
+  # defines fandom_string=, media_string=, character_string=, relationship_string=, freeform_string=
   %w(Fandom Media Character Relationship Freeform).each do |tag_type|
     attr_reader "#{tag_type.downcase}_string"
 
@@ -1030,7 +1004,7 @@ class Tag < ApplicationRecord
         self.errors.add(:base, tag_string + " could not be saved. Please make sure that it's a valid tag name.")
       end
     end
-    
+
     # If we don't have any errors, update the tag to add the new merger
     if new_merger && self.errors.empty?
       self.canonical = false
@@ -1046,14 +1020,6 @@ class Tag < ApplicationRecord
         syn.update_attributes(merger_id: self.id)
       end
     end
-  end
-
-  def indirect_bookmarks(rec=false)
-    cond = rec ? {rec: true, private: false, hidden_by_admin: false} : {private: false, hidden_by_admin: false}
-    work_bookmarks = Bookmark.where(bookmarkable_id: self.work_ids, bookmarkable_type: 'Work').merge(cond)
-    ext_work_bookmarks = Bookmark.where(bookmarkable_id: self.external_work_ids, bookmarkable_type: 'ExternalWork').merge(cond)
-    series_bookmarks = [] # can't tag a series directly? # Bookmark.where(bookmarkable_id: self.series_ids, bookmarkable_type: 'Series').merge(cond)
-    (work_bookmarks + ext_work_bookmarks + series_bookmarks)
   end
 
   #################################
